@@ -6,7 +6,6 @@ import { z } from "zod";
 
 import { getCurrentAdminProfile } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 
 const staffSchema = z.object({
   full_name: z.string().trim().min(1),
@@ -69,12 +68,43 @@ export async function createStaffAccount(
   redirect("/dashboard/staff");
 }
 
+const nameSchema = z.object({
+  full_name: z.string().trim().min(1),
+});
+
+export async function updateStaffName(
+  profileId: string,
+  fullName: string
+): Promise<{ error: string } | null> {
+  const admin = await getCurrentAdminProfile();
+  if (!admin) throw new Error("Not authorized.");
+
+  const parsed = nameSchema.safeParse({ full_name: fullName });
+  if (!parsed.success) {
+    return { error: "Please enter a nickname." };
+  }
+
+  const adminClient = createAdminClient();
+  const { error } = await adminClient
+    .from("profiles")
+    .update({ full_name: parsed.data.full_name })
+    .eq("id", profileId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard/staff");
+  return null;
+}
+
 export async function setStaffActive(staffMemberId: string, isActive: boolean) {
   const admin = await getCurrentAdminProfile();
   if (!admin) throw new Error("Not authorized.");
 
-  const supabase = await createClient();
-  await supabase.from("staff_members").update({ is_active: isActive }).eq("id", staffMemberId);
+  const adminClient = createAdminClient();
+  const { error } = await adminClient
+    .from("staff_members")
+    .update({ is_active: isActive })
+    .eq("id", staffMemberId);
+  if (error) throw new Error(error.message);
 
   revalidatePath("/dashboard/staff");
 }
