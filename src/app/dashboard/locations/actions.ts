@@ -13,8 +13,6 @@ const locationSchema = z.object({
   address: z.string().trim().min(1),
   suburb: z.string().trim().min(1),
   phone: z.string().trim().min(1),
-  latitude: z.coerce.number(),
-  longitude: z.coerce.number(),
   is_participating: z.boolean(),
 });
 
@@ -37,8 +35,6 @@ export async function createLocation(
     address: formData.get("address"),
     suburb: formData.get("suburb"),
     phone: formData.get("phone"),
-    latitude: formData.get("latitude"),
-    longitude: formData.get("longitude"),
     is_participating: formData.get("is_participating") === "on",
   });
   if (!parsed.success) {
@@ -68,8 +64,6 @@ export async function updateLocation(
     address: formData.get("address"),
     suburb: formData.get("suburb"),
     phone: formData.get("phone"),
-    latitude: formData.get("latitude"),
-    longitude: formData.get("longitude"),
     is_participating: formData.get("is_participating") === "on",
   });
   if (!parsed.success) {

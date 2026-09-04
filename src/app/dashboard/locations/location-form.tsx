@@ -15,8 +15,6 @@ type LocationRecord = {
   address: string;
   suburb: string;
   phone: string;
-  latitude: number;
-  longitude: number;
   is_participating: boolean;
   opening_hours: OpeningHours;
 };
@@ -58,29 +56,6 @@ export function LocationForm({
         <Field label="Phone" htmlFor="phone">
           <Input id="phone" name="phone" defaultValue={initial?.phone} required />
         </Field>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Latitude" htmlFor="latitude">
-            <Input
-              id="latitude"
-              name="latitude"
-              type="number"
-              step="any"
-              defaultValue={initial?.latitude}
-              required
-            />
-          </Field>
-          <Field label="Longitude" htmlFor="longitude">
-            <Input
-              id="longitude"
-              name="longitude"
-              type="number"
-              step="any"
-              defaultValue={initial?.longitude}
-              required
-            />
-          </Field>
-        </div>
 
         <OpeningHoursFields initial={initial?.opening_hours} />
 

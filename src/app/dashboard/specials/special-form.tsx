@@ -41,7 +41,7 @@ export function SpecialForm({
 
   return (
     <Card className="w-full max-w-3xl">
-      <form action={formAction} encType="multipart/form-data" className="flex flex-col gap-4">
+      <form action={formAction} className="flex flex-col gap-4">
         <ErrorBanner message={state?.error} />
 
         <Field label="Title" htmlFor="title">
