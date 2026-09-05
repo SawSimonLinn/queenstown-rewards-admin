@@ -3,16 +3,11 @@
 import { useActionState } from "react";
 
 import { Card, ErrorBanner } from "@/components/ui/card";
-import {
-  checkboxClass,
-  checkboxLabelClass,
-  Field,
-  fileInputClass,
-  Input,
-  Select,
-  Textarea,
-} from "@/components/ui/field";
+import { Field, Input, Select, Textarea } from "@/components/ui/field";
+import { ImageUploadField } from "@/components/ui/image-upload-field";
+import { LocationMultiSelect } from "@/components/ui/multi-select";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { useUnsavedChangesWarning } from "@/lib/use-unsaved-changes-warning";
 
 import type { CampaignFormState } from "./actions";
 
@@ -40,58 +35,39 @@ export function CampaignForm({
   submitLabel: string;
 }) {
   const [state, formAction] = useActionState<CampaignFormState, FormData>(action, null);
-  const selected = new Set(initialLocationIds ?? []);
+  const formRef = useUnsavedChangesWarning<HTMLFormElement>();
 
   return (
     <Card className="w-full max-w-3xl">
-      <form action={formAction} className="flex flex-col gap-4">
+      <form ref={formRef} action={formAction} className="flex flex-col gap-4">
         <ErrorBanner message={state?.error} />
 
-        <Field label="Name" htmlFor="name">
+        <Field label="Name" htmlFor="name" required>
           <Input id="name" name="name" defaultValue={initial?.name} required />
         </Field>
 
-        <Field label="Description" htmlFor="description">
-          <Textarea
-            id="description"
-            name="description"
-            rows={3}
-            defaultValue={initial?.description}
-            required
-          />
+        <Field label="Description" htmlFor="description" required>
+          <Textarea id="description" name="description" rows={3} defaultValue={initial?.description} required />
         </Field>
 
-        <Field label="Terms and restrictions" htmlFor="terms_and_restrictions">
-          <Textarea
-            id="terms_and_restrictions"
-            name="terms_and_restrictions"
-            rows={2}
-            defaultValue={initial?.terms_and_restrictions}
-          />
+        <Field
+          label="Terms and restrictions"
+          htmlFor="terms_and_restrictions"
+          hint="Optional — shown to customers in the mobile app."
+        >
+          <Textarea id="terms_and_restrictions" name="terms_and_restrictions" rows={2} defaultValue={initial?.terms_and_restrictions} />
         </Field>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Start date" htmlFor="start_date">
-            <Input
-              id="start_date"
-              name="start_date"
-              type="date"
-              defaultValue={initial?.start_date?.slice(0, 10)}
-              required
-            />
+          <Field label="Start date" htmlFor="start_date" required>
+            <Input id="start_date" name="start_date" type="date" defaultValue={initial?.start_date?.slice(0, 10)} required />
           </Field>
-          <Field label="End date" htmlFor="end_date">
-            <Input
-              id="end_date"
-              name="end_date"
-              type="date"
-              defaultValue={initial?.end_date?.slice(0, 10)}
-              required
-            />
+          <Field label="End date" htmlFor="end_date" required>
+            <Input id="end_date" name="end_date" type="date" defaultValue={initial?.end_date?.slice(0, 10)} required />
           </Field>
         </div>
 
-        <Field label="Status" htmlFor="status">
+        <Field label="Status" htmlFor="status" required>
           <Select id="status" name="status" defaultValue={initial?.status ?? "draft"} required>
             <option value="draft">Draft</option>
             <option value="scheduled">Scheduled</option>
@@ -100,35 +76,13 @@ export function CampaignForm({
           </Select>
         </Field>
 
-        <Field label="Image" htmlFor="image">
-          <input id="image" name="image" type="file" accept="image/*" className={fileInputClass} />
-          {initial?.image_url && (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={initial.image_url}
-              alt=""
-              className="mt-2 h-24 w-full max-w-xs rounded-md object-cover"
-            />
-          )}
+        <Field label="Image" htmlFor="image" hint="Shown as the campaign's hero image in the mobile app.">
+          <ImageUploadField id="image" name="image" existingImageUrl={initial?.image_url} />
         </Field>
 
-        <div>
-          <p className="mb-1 text-sm font-medium text-neutral-700">Participating locations</p>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {locations.map((location) => (
-              <label key={location.id} className={checkboxLabelClass}>
-                <input
-                  type="checkbox"
-                  name="location_ids"
-                  value={location.id}
-                  defaultChecked={selected.has(location.id)}
-                  className={checkboxClass}
-                />
-                <span className="min-w-0 break-words">{location.name}</span>
-              </label>
-            ))}
-          </div>
-        </div>
+        <Field label="Participating locations" htmlFor="location_ids">
+          <LocationMultiSelect name="location_ids" locations={locations} defaultSelectedIds={initialLocationIds} />
+        </Field>
 
         <div>
           <SubmitButton>{submitLabel}</SubmitButton>

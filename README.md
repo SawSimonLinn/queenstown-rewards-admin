@@ -19,18 +19,69 @@ the Expo mobile app, sharing the same Supabase project.
 
 ## What's here
 
-Locations, Burger of the Month campaigns, specials (with image upload to
-Supabase Storage), QR code generation, redemption search/filtering,
-customer eligibility management, staff accounts, push notifications
-(send-now via Expo's push API), and an admin-only audit log.
+Locations (with an overview/hours/campaigns/promotions/QR codes/staff detail
+view), Burger of the Month campaigns, promotions ("specials", with image
+upload to Supabase Storage and a draft/active publish flag), QR code
+generation, a full redemption confirm/cancel/correct workflow, customer
+eligibility management, staff accounts, push notifications (send-now via
+Expo's push API, plus scheduled dispatch — see Runbook below), and an
+admin-only audit log.
 
 Sensitive operations (creating staff accounts, broadcasting push
 notifications) run server-side using the service-role key — never in the
 browser. Everything else uses the public anon key through Supabase's Row
 Level Security, same as the mobile app.
 
-**Known gap:** "Correct a confirmed redemption" isn't built yet — only
-cancelling a customer's own still-pending request (from the mobile app)
-exists so far. Scheduled notifications are saved but don't auto-send later
-without a cron/Edge Function, which isn't wired up.
-# queenstown-rewards-admin
+## Runbook: this repo's own migrations
+
+Schema for the shared tables is owned by the mobile app's migrations (see
+Setup above), but three small additive migrations live in **this** repo's
+`supabase/migrations/` because they only matter to the admin dashboard:
+
+1. `20260904170000_specials_status.sql` — adds `specials.status`
+   (`draft`/`active`) so promotions can be saved as drafts before publishing.
+2. `20260904170100_redemptions_confirmation.sql` — adds
+   `redemptions.confirmed_by_staff_id` and `redemptions.correction_note`,
+   needed for the confirm/cancel/correct workflow.
+3. `20260904170200_notification_dispatch.sql` — widens
+   `notification_campaigns.status` to include `sending`/`failed`, enables
+   `pg_cron`/`pg_net`, and schedules a job that calls the
+   `dispatch-notifications` Edge Function every minute.
+
+Run all three, in order, in the Supabase SQL Editor. Before running #3, edit
+its `cron.schedule(...)` call to use your real project ref and service role
+key (the file has inline placeholders and comments).
+
+### Deploying the scheduled-notification dispatcher
+
+Scheduled notifications are saved with `status: "scheduled"` but nothing
+sends them until this Edge Function is deployed and the cron job above is
+active:
+
+```sh
+supabase functions deploy dispatch-notifications
+supabase secrets set SUPABASE_SERVICE_ROLE_KEY=<your service role key>
+```
+
+`SUPABASE_URL` is provided automatically by Supabase. Once deployed, the
+cron job hits the function every minute; it finds due `scheduled` campaigns,
+sends them via Expo's push API, and marks them `sent` or `failed`. Until you
+do this deploy step, scheduled notifications will sit in `scheduled` status
+indefinitely — the dashboard's "Needs attention" panel will surface that.
+
+## Known gaps / assumptions
+
+- Only redemption confirm/cancel/correct and notification dispatch write to
+  `audit_logs` from this app. Other mutations (locations, campaigns,
+  promotions, staff, QR codes) don't yet — that predates this redesign.
+- "Burger Club member" (customer list/detail) is derived as "has at least
+  one `monthly_entitlements` row" — there's no dedicated membership flag in
+  the schema.
+- "Preferred location" (customer list/detail) is derived from the
+  customer's most recent redemption — there's no stored preference field.
+- Promotions don't have a location-scoped audience or a linked
+  campaign/promotion field on notifications — the schema doesn't have those
+  columns and adding them was out of scope for this pass.
+- Brand colors in `src/app/globals.css` are an interpretation of "Queenstown
+  orange-red"; retune the CSS variables there if they don't match the
+  mobile app's actual palette.

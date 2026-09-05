@@ -6,6 +6,7 @@ import { createQrCode, type QrFormState } from "@/app/dashboard/qr-codes/actions
 import { Card, ErrorBanner } from "@/components/ui/card";
 import { Field, Input, Select } from "@/components/ui/field";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { useUnsavedChangesWarning } from "@/lib/use-unsaved-changes-warning";
 
 type Option = { id: string; name: string };
 
@@ -17,16 +18,17 @@ export function QrCodeForm({
   campaigns: Option[];
 }) {
   const [state, formAction] = useActionState<QrFormState, FormData>(createQrCode, null);
+  const formRef = useUnsavedChangesWarning<HTMLFormElement>();
 
   const defaultExpiry = new Date();
   defaultExpiry.setMonth(defaultExpiry.getMonth() + 1);
 
   return (
     <Card className="w-full max-w-xl">
-      <form action={formAction} className="flex flex-col gap-4">
+      <form ref={formRef} action={formAction} className="flex flex-col gap-4">
         <ErrorBanner message={state?.error} />
 
-        <Field label="Location" htmlFor="location_id">
+        <Field label="Location" htmlFor="location_id" required>
           <Select id="location_id" name="location_id" required defaultValue="">
             <option value="" disabled>
               Select a location
@@ -39,7 +41,7 @@ export function QrCodeForm({
           </Select>
         </Field>
 
-        <Field label="Campaign" htmlFor="campaign_id">
+        <Field label="Campaign" htmlFor="campaign_id" required>
           <Select id="campaign_id" name="campaign_id" required defaultValue="">
             <option value="" disabled>
               Select a campaign
@@ -52,7 +54,7 @@ export function QrCodeForm({
           </Select>
         </Field>
 
-        <Field label="Expires at" htmlFor="expires_at">
+        <Field label="Expires at" htmlFor="expires_at" required>
           <Input
             id="expires_at"
             name="expires_at"

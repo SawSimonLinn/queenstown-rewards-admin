@@ -47,12 +47,43 @@ export async function createQrCode(
   redirect("/dashboard/qr-codes");
 }
 
-export async function deactivateQrCode(qrCodeId: string) {
+export async function deactivateQrCode(qrCodeId: string): Promise<{ error?: string }> {
   const profile = await getCurrentStaffProfile();
-  if (!profile) throw new Error("Not authorized.");
+  if (!profile) return { error: "Not authorized." };
 
   const supabase = await createClient();
-  await supabase.from("redemption_qr_codes").update({ is_active: false }).eq("id", qrCodeId);
+  const { error } = await supabase.from("redemption_qr_codes").update({ is_active: false }).eq("id", qrCodeId);
+  if (error) return { error: error.message };
 
   revalidatePath("/dashboard/qr-codes");
+  return {};
+}
+
+/** Deactivates the current code and creates a fresh one for the same location/campaign. */
+export async function regenerateQrCode(qrCodeId: string): Promise<{ error?: string }> {
+  const profile = await getCurrentStaffProfile();
+  if (!profile) return { error: "Not authorized." };
+
+  const supabase = await createClient();
+  const { data: existing, error: fetchError } = await supabase
+    .from("redemption_qr_codes")
+    .select("location_id, campaign_id, expires_at")
+    .eq("id", qrCodeId)
+    .maybeSingle();
+  if (fetchError) return { error: fetchError.message };
+  if (!existing) return { error: "QR code not found." };
+
+  await supabase.from("redemption_qr_codes").update({ is_active: false }).eq("id", qrCodeId);
+
+  const { error: insertError } = await supabase.from("redemption_qr_codes").insert({
+    location_id: existing.location_id,
+    campaign_id: existing.campaign_id,
+    expires_at: existing.expires_at,
+    token: crypto.randomUUID(),
+    is_active: true,
+  });
+  if (insertError) return { error: insertError.message };
+
+  revalidatePath("/dashboard/qr-codes");
+  return {};
 }

@@ -9,7 +9,10 @@ export default async function NewCampaignPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="New Burger of the Month campaign" />
+      <PageHeader
+        title="New Burger of the Month campaign"
+        breadcrumbs={[{ label: "Burger Campaigns", href: "/dashboard/campaigns" }, { label: "New" }]}
+      />
       <CampaignForm
         action={createCampaign}
         locations={locations ?? []}

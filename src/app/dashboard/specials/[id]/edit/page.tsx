@@ -23,7 +23,10 @@ export default async function EditSpecialPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title={`Edit ${special.title}`} />
+      <PageHeader
+        title={`Edit ${special.title}`}
+        breadcrumbs={[{ label: "Promotions", href: "/dashboard/specials" }, { label: special.title }]}
+      />
       <SpecialForm
         action={updateSpecial.bind(null, id)}
         initial={special}

@@ -18,7 +18,14 @@ export default async function EditLocationPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title={`Edit ${location.name}`} />
+      <PageHeader
+        title={`Edit ${location.name}`}
+        breadcrumbs={[
+          { label: "Locations", href: "/dashboard/locations" },
+          { label: location.name, href: `/dashboard/locations/${id}` },
+          { label: "Edit" },
+        ]}
+      />
       <LocationForm
         action={updateLocation.bind(null, id)}
         initial={location}

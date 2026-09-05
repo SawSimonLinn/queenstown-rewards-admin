@@ -24,7 +24,7 @@ export function Skeleton({ className = "" }: { className?: string }) {
   return (
     <span
       aria-hidden="true"
-      className={`block rounded-md bg-neutral-200/80 motion-safe:animate-pulse ${className}`}
+      className={`block rounded-md bg-border/80 motion-safe:animate-pulse ${className}`}
     />
   );
 }
@@ -117,7 +117,7 @@ export function DataTableSkeleton({
   return (
     <Card padding="none" className="hidden overflow-x-auto md:block">
       <table className="w-full min-w-max text-left text-sm">
-        <thead className="border-b border-neutral-200 bg-neutral-50">
+        <thead className="border-b border-border bg-cream">
           <tr>
             {Array.from({ length: columns }, (_, index) => (
               <th
@@ -131,7 +131,7 @@ export function DataTableSkeleton({
         </thead>
         <tbody>
           {Array.from({ length: rows }, (_, rowIndex) => (
-            <tr key={rowIndex} className="border-b border-neutral-100 last:border-0">
+            <tr key={rowIndex} className="border-b border-border last:border-0">
               {Array.from({ length: columns }, (_, columnIndex) => (
                 <td
                   key={columnIndex}
@@ -170,7 +170,7 @@ export function MobileCardListSkeleton({
       {Array.from({ length: cards }, (_, cardIndex) => (
         <article
           key={cardIndex}
-          className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm"
+          className="rounded-lg border border-border bg-white p-4 shadow-sm"
         >
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
@@ -300,7 +300,7 @@ export function QrCodeGridSkeleton() {
               </div>
               <Skeleton className="h-6 w-16 shrink-0" />
             </div>
-            <div className="flex flex-col items-center gap-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4 sm:flex-row">
+            <div className="flex flex-col items-center gap-4 rounded-lg border border-border bg-cream p-4 sm:flex-row">
               <Skeleton className="h-36 w-36 shrink-0" />
               <div className="grid w-full min-w-0 flex-1 gap-3">
                 <div className="grid gap-1">
@@ -325,7 +325,7 @@ function DetailSectionSkeleton({ columns }: { columns: number }) {
   return (
     <Card>
       <Skeleton className="mb-4 h-5 w-44" />
-      <div className="divide-y divide-neutral-100 md:hidden">
+      <div className="divide-y divide-border md:hidden">
         {Array.from({ length: 3 }, (_, index) => (
           <section key={index} className="py-4 first:pt-0 last:pb-0">
             <div className="flex items-start justify-between gap-3">
@@ -343,7 +343,7 @@ function DetailSectionSkeleton({ columns }: { columns: number }) {
       </div>
       <div className="hidden overflow-x-auto md:block">
         <table className="w-full min-w-max text-left text-sm">
-        <thead className="border-b border-neutral-200">
+        <thead className="border-b border-border">
           <tr>
             {Array.from({ length: columns }, (_, index) => (
               <th
@@ -357,7 +357,7 @@ function DetailSectionSkeleton({ columns }: { columns: number }) {
         </thead>
         <tbody>
           {Array.from({ length: 4 }, (_, rowIndex) => (
-            <tr key={rowIndex} className="border-b border-neutral-100 last:border-0">
+            <tr key={rowIndex} className="border-b border-border last:border-0">
               {Array.from({ length: columns }, (_, columnIndex) => (
                 <td
                   key={columnIndex}

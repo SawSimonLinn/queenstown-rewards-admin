@@ -9,7 +9,10 @@ export default async function NewSpecialPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="New special" />
+      <PageHeader
+        title="New promotion"
+        breadcrumbs={[{ label: "Promotions", href: "/dashboard/specials" }, { label: "New" }]}
+      />
       <SpecialForm action={createSpecial} locations={locations ?? []} submitLabel="Create special" />
     </div>
   );

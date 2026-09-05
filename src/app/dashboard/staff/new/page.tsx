@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 export default async function NewStaffPage() {
   const admin = await getCurrentAdminProfile();
   if (!admin) {
-    return <p className="text-neutral-600">Only admins can create staff accounts.</p>;
+    return <p className="text-muted">Only admins can create staff accounts.</p>;
   }
 
   const supabase = await createClient();
@@ -14,7 +14,10 @@ export default async function NewStaffPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Add staff account" />
+      <PageHeader
+        title="Add staff account"
+        breadcrumbs={[{ label: "Staff", href: "/dashboard/staff" }, { label: "New" }]}
+      />
       <StaffForm locations={locations ?? []} />
     </div>
   );

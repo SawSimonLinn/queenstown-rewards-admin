@@ -23,7 +23,10 @@ export default async function EditCampaignPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title={`Edit ${campaign.name}`} />
+      <PageHeader
+        title={`Edit ${campaign.name}`}
+        breadcrumbs={[{ label: "Burger Campaigns", href: "/dashboard/campaigns" }, { label: campaign.name }]}
+      />
       <CampaignForm
         action={updateCampaign.bind(null, id)}
         initial={campaign}

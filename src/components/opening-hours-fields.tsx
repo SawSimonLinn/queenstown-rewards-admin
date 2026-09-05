@@ -14,14 +14,14 @@ const DAY_LABELS: Record<string, string> = {
 export function OpeningHoursFields({ initial }: { initial?: OpeningHours }) {
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-sm font-medium text-neutral-700">Opening hours</p>
+      <p className="text-sm font-medium text-ink">Opening hours</p>
       {DAYS.map((day) => {
         const hours = initial?.[day] ?? null;
         const label = DAY_LABELS[day];
         return (
-          <div key={day} className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+          <div key={day} className="rounded-lg border border-border bg-cream p-3">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-medium text-neutral-800">{label}</span>
+              <span className="text-sm font-medium text-ink">{label}</span>
               <label className={`${checkboxLabelClass} min-h-9 px-2 py-1`}>
                 <input
                   type="checkbox"

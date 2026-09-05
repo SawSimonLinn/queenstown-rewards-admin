@@ -7,6 +7,7 @@ import { Card, ErrorBanner } from "@/components/ui/card";
 import { checkboxClass, checkboxLabelClass, Field, Input } from "@/components/ui/field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import type { OpeningHours } from "@/lib/opening-hours";
+import { useUnsavedChangesWarning } from "@/lib/use-unsaved-changes-warning";
 
 import type { LocationFormState } from "./actions";
 
@@ -29,21 +30,22 @@ export function LocationForm({
   submitLabel: string;
 }) {
   const [state, formAction] = useActionState<LocationFormState, FormData>(action, null);
+  const formRef = useUnsavedChangesWarning<HTMLFormElement>();
 
   return (
     <Card className="w-full max-w-3xl">
-      <form action={formAction} className="flex flex-col gap-4">
+      <form ref={formRef} action={formAction} className="flex flex-col gap-4">
         <ErrorBanner message={state?.error} />
 
-        <Field label="Name" htmlFor="name">
+        <Field label="Name" htmlFor="name" required>
           <Input id="name" name="name" defaultValue={initial?.name} required />
         </Field>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Address" htmlFor="address">
+          <Field label="Address" htmlFor="address" required>
             <Input id="address" name="address" defaultValue={initial?.address} required />
           </Field>
-          <Field label="Suburb" htmlFor="suburb">
+          <Field label="Suburb" htmlFor="suburb" required>
             <Input
               id="suburb"
               name="suburb"
@@ -53,7 +55,7 @@ export function LocationForm({
           </Field>
         </div>
 
-        <Field label="Phone" htmlFor="phone">
+        <Field label="Phone" htmlFor="phone" required>
           <Input id="phone" name="phone" defaultValue={initial?.phone} required />
         </Field>
 

@@ -28,7 +28,7 @@ export function StaffNameCell({
             setError(null);
             setEditing(true);
           }}
-          className="shrink-0 text-xs font-medium text-blue-700 hover:underline"
+          className="shrink-0 text-xs font-medium text-brand hover:underline"
         >
           Edit
         </button>
@@ -62,7 +62,7 @@ export function StaffNameCell({
       <button
         type="submit"
         disabled={isPending}
-        className="shrink-0 text-xs font-medium text-blue-700 hover:underline disabled:opacity-60"
+        className="shrink-0 text-xs font-medium text-brand hover:underline disabled:opacity-60"
       >
         Save
       </button>
@@ -70,11 +70,11 @@ export function StaffNameCell({
         type="button"
         onClick={() => setEditing(false)}
         disabled={isPending}
-        className="shrink-0 text-xs font-medium text-neutral-500 hover:underline"
+        className="shrink-0 text-xs font-medium text-muted hover:underline"
       >
         Cancel
       </button>
-      {error ? <span className="text-xs text-red-600">{error}</span> : null}
+      {error ? <span className="text-xs text-danger">{error}</span> : null}
     </form>
   );
 }

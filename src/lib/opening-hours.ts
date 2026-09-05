@@ -22,3 +22,31 @@ export function parseOpeningHoursFromFormData(formData: FormData): OpeningHours 
   }
   return result;
 }
+
+const LOCATION_TIMEZONE = "Pacific/Auckland";
+
+/**
+ * Whether the location is open right now, based on today's opening_hours
+ * entry in Queenstown local time. Returns null when today has no hours data
+ * at all, so callers can hide the badge rather than guess.
+ */
+export function isLocationOpenNow(openingHours: OpeningHours | null, now: Date = new Date()): boolean | null {
+  if (!openingHours) return null;
+
+  const weekday = new Intl.DateTimeFormat("en-US", { timeZone: LOCATION_TIMEZONE, weekday: "long" })
+    .format(now)
+    .toLowerCase() as DayKey;
+  const hours = openingHours[weekday];
+  if (!DAYS.includes(weekday)) return null;
+  if (hours === undefined) return null;
+  if (hours === null) return false;
+
+  const currentTime = new Intl.DateTimeFormat("en-GB", {
+    timeZone: LOCATION_TIMEZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(now);
+
+  return currentTime >= hours.open && currentTime <= hours.close;
+}

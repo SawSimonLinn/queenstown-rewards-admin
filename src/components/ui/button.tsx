@@ -1,15 +1,17 @@
 import type { ButtonHTMLAttributes } from "react";
 
-type Variant = "primary" | "outline" | "danger";
+type Variant = "primary" | "outline" | "ghost" | "danger";
 type Size = "sm" | "md";
 
 const VARIANT_CLASSES: Record<Variant, string> = {
   primary:
-    "border border-blue-700 bg-blue-700 text-white shadow-sm hover:border-blue-800 hover:bg-blue-800 active:bg-blue-900 disabled:border-blue-300 disabled:bg-blue-300",
+    "border border-brand bg-brand text-white shadow-sm hover:border-brand-hover hover:bg-brand-hover active:bg-brand-active disabled:border-brand/40 disabled:bg-brand/40",
   outline:
-    "border border-neutral-300 bg-white text-neutral-800 shadow-sm hover:border-neutral-400 hover:bg-neutral-100 active:bg-neutral-200 disabled:border-neutral-200 disabled:text-neutral-400",
+    "border border-border-strong bg-surface text-ink shadow-sm hover:border-ink/30 hover:bg-cream disabled:border-border disabled:text-muted",
+  ghost:
+    "border border-transparent bg-transparent text-ink hover:bg-cream disabled:text-muted",
   danger:
-    "border border-red-700 bg-red-700 text-white shadow-sm hover:border-red-800 hover:bg-red-800 active:bg-red-900 disabled:border-red-300 disabled:bg-red-300",
+    "border border-danger bg-danger text-white shadow-sm hover:border-danger/90 hover:bg-danger/90 active:bg-danger disabled:border-danger/40 disabled:bg-danger/40",
 };
 
 const SIZE_CLASSES: Record<Size, string> = {
@@ -26,7 +28,7 @@ export function buttonClassName({
   size?: Size;
   className?: string;
 } = {}) {
-  return `inline-flex items-center justify-center gap-2 rounded-md text-center text-sm font-medium leading-5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-70 ${SIZE_CLASSES[size]} ${VARIANT_CLASSES[variant]} ${className}`;
+  return `inline-flex items-center justify-center gap-2 rounded-lg text-center text-sm font-medium leading-5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-70 ${SIZE_CLASSES[size]} ${VARIANT_CLASSES[variant]} ${className}`;
 }
 
 export function Button({

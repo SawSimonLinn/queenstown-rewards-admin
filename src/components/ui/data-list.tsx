@@ -1,9 +1,10 @@
 const TONE_CLASSES = {
-  neutral: "bg-neutral-100 text-neutral-700 ring-neutral-200",
-  blue: "bg-blue-50 text-blue-800 ring-blue-200",
-  green: "bg-green-50 text-green-800 ring-green-200",
-  yellow: "bg-yellow-50 text-yellow-800 ring-yellow-200",
-  red: "bg-red-50 text-red-800 ring-red-200",
+  neutral: "bg-cream text-muted ring-border-strong",
+  blue: "bg-info-tint text-info ring-info-border",
+  green: "bg-success-tint text-success ring-success-border",
+  yellow: "bg-warning-tint text-warning ring-warning-border",
+  red: "bg-danger-tint text-danger ring-danger-border",
+  brand: "bg-brand-tint text-brand-active ring-brand-tint-border",
 } as const;
 
 export type BadgeTone = keyof typeof TONE_CLASSES;
@@ -44,7 +45,7 @@ export function MobileDataCard({
   className?: string;
 }) {
   return (
-    <article className={`rounded-lg border border-neutral-200 bg-white p-4 shadow-sm ${className}`}>
+    <article className={`rounded-xl border border-border bg-surface p-4 shadow-sm ${className}`}>
       {children}
     </article>
   );
@@ -59,15 +60,22 @@ export function DataPair({
 }) {
   return (
     <div className="min-w-0">
-      <dt className="text-xs font-medium uppercase text-neutral-500">{label}</dt>
-      <dd className="mt-1 break-words text-sm text-neutral-700">{children}</dd>
+      <dt className="text-xs font-medium uppercase tracking-wide text-muted">{label}</dt>
+      <dd className="mt-1 break-words text-sm text-ink">{children}</dd>
     </div>
   );
 }
 
-export function EmptyState({ children }: { children: React.ReactNode }) {
+export function EmptyState({
+  children,
+  icon,
+}: {
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+}) {
   return (
-    <div className="rounded-lg border border-dashed border-neutral-300 bg-white px-4 py-8 text-center text-sm font-medium text-neutral-500">
+    <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border-strong bg-surface px-4 py-10 text-center text-sm font-medium text-muted">
+      {icon ? <div className="text-muted/70">{icon}</div> : null}
       {children}
     </div>
   );

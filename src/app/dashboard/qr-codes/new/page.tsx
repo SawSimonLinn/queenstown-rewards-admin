@@ -11,7 +11,10 @@ export default async function NewQrCodePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Generate QR code" />
+      <PageHeader
+        title="Generate QR code"
+        breadcrumbs={[{ label: "QR Codes", href: "/dashboard/qr-codes" }, { label: "New" }]}
+      />
       <QrCodeForm locations={locations ?? []} campaigns={campaigns ?? []} />
     </div>
   );

@@ -1,17 +1,11 @@
-import { buttonClassName } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Badge,
-  type BadgeTone,
-  DataPair,
-  EmptyState,
-  MobileDataCard,
-  MobileDataList,
-} from "@/components/ui/data-list";
+import { Badge, type BadgeTone, DataPair, EmptyState, MobileDataCard, MobileDataList } from "@/components/ui/data-list";
+import { FilterBar } from "@/components/ui/filter-bar";
 import { Field, Input, Select } from "@/components/ui/field";
 import { PageHeader } from "@/components/ui/page-header";
 import { Pagination } from "@/components/ui/pagination";
 import { getCurrentAdminProfile } from "@/lib/auth";
+import { humanizeAction } from "@/lib/audit-labels";
 import { createClient } from "@/lib/supabase/server";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -19,11 +13,18 @@ const PAGE_SIZE = 25;
 const SYSTEM_ACTOR_VALUE = "system";
 
 function actionTone(action: string): BadgeTone {
-  if (action.endsWith("_confirmed")) return "green";
+  if (action.endsWith("_confirmed") || action.endsWith("_dispatched")) return "green";
   if (action.endsWith("_created") || action.endsWith("_joined")) return "blue";
-  if (action.endsWith("_deleted") || action.endsWith("_deactivated") || action.endsWith("_removed")) {
+  if (
+    action.endsWith("_deleted") ||
+    action.endsWith("_deactivated") ||
+    action.endsWith("_removed") ||
+    action.endsWith("_cancelled") ||
+    action.endsWith("_failed")
+  ) {
     return "red";
   }
+  if (action.endsWith("_corrected")) return "brand";
   return "neutral";
 }
 
@@ -40,31 +41,31 @@ function formatValue(value: unknown) {
 }
 
 function TruncatedId({ value }: { value: string | null }) {
-  if (!value) return <span className="text-neutral-400">No target</span>;
+  if (!value) return <span className="text-muted">No target</span>;
   return (
-    <span className="font-mono text-xs text-neutral-500" title={value}>
+    <span className="font-mono text-xs text-muted" title={value}>
       {UUID_PATTERN.test(value) ? `${value.slice(0, 8)}…` : value}
     </span>
   );
 }
 
-function MetadataList({ metadata }: { metadata: Record<string, unknown> | null }) {
+function MetadataDisclosure({ metadata }: { metadata: Record<string, unknown> | null }) {
   const entries = metadata ? Object.entries(metadata) : [];
-  if (entries.length === 0) return <span className="text-neutral-400">—</span>;
+  if (entries.length === 0) return <span className="text-muted">—</span>;
   return (
-    <dl className="grid gap-1">
-      {entries.map(([key, value]) => (
-        <div key={key} className="flex flex-wrap gap-x-1.5 text-xs">
-          <dt className="font-medium text-neutral-500">{humanizeKey(key)}:</dt>
-          <dd
-            className="break-all font-mono text-neutral-700"
-            title={typeof value === "string" ? value : undefined}
-          >
-            {formatValue(value)}
-          </dd>
-        </div>
-      ))}
-    </dl>
+    <details className="text-xs">
+      <summary className="cursor-pointer select-none font-medium text-brand">Details</summary>
+      <dl className="mt-1.5 grid gap-1">
+        {entries.map(([key, value]) => (
+          <div key={key} className="flex flex-wrap gap-x-1.5">
+            <dt className="font-medium text-muted">{humanizeKey(key)}:</dt>
+            <dd className="break-all font-mono text-ink" title={typeof value === "string" ? value : undefined}>
+              {formatValue(value)}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </details>
   );
 }
 
@@ -75,7 +76,7 @@ export default async function AuditLogPage({
 }) {
   const admin = await getCurrentAdminProfile();
   if (!admin) {
-    return <p className="text-neutral-600">Only admins can view the audit log.</p>;
+    return <p className="text-muted">Only admins can view the audit log.</p>;
   }
 
   const params = await searchParams;
@@ -88,21 +89,14 @@ export default async function AuditLogPage({
 
   const [{ data: actionRows }, { data: actorRows }] = await Promise.all([
     supabase.from("audit_logs").select("action").order("action").limit(1000),
-    supabase
-      .from("profiles")
-      .select("id, full_name")
-      .in("role", ["admin", "staff"])
-      .order("full_name"),
+    supabase.from("profiles").select("id, full_name").in("role", ["admin", "staff"]).order("full_name"),
   ]);
   const actionOptions = Array.from(new Set((actionRows ?? []).map((row) => row.action))).sort();
   const actorOptions = actorRows ?? [];
 
   let query = supabase
     .from("audit_logs")
-    .select(
-      "id, action, actor_profile_id, target_id, metadata, created_at, profiles(full_name)",
-      { count: "exact" }
-    )
+    .select("id, action, actor_profile_id, target_id, metadata, created_at, profiles(full_name)", { count: "exact" })
     .order("created_at", { ascending: false });
 
   if (params.action) query = query.eq("action", params.action);
@@ -138,45 +132,38 @@ export default async function AuditLogPage({
         subtitle={`${totalCount} matching ${totalCount === 1 ? "entry" : "entries"} · page ${page} of ${totalPages}`}
       />
 
-      <Card>
-        <form className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5" method="get">
-          <Field label="Search" htmlFor="q">
-            <Input id="q" name="q" defaultValue={params.q} placeholder="Action or target ID" />
-          </Field>
-          <Field label="Action" htmlFor="action">
-            <Select id="action" name="action" defaultValue={params.action ?? ""}>
-              <option value="">All actions</option>
-              {actionOptions.map((action) => (
-                <option key={action} value={action}>
-                  {action.replace(/_/g, " ")}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="Actor" htmlFor="actor">
-            <Select id="actor" name="actor" defaultValue={params.actor ?? ""}>
-              <option value="">All actors</option>
-              <option value={SYSTEM_ACTOR_VALUE}>System</option>
-              {actorOptions.map((actor) => (
-                <option key={actor.id} value={actor.id}>
-                  {actor.full_name}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="From" htmlFor="from">
-            <Input id="from" name="from" type="date" defaultValue={params.from} />
-          </Field>
-          <Field label="To" htmlFor="to">
-            <Input id="to" name="to" type="date" defaultValue={params.to} />
-          </Field>
-          <div className="sm:col-span-2 xl:col-span-5">
-            <button type="submit" className={buttonClassName({ className: "w-full sm:w-auto" })}>
-              Filter
-            </button>
-          </div>
-        </form>
-      </Card>
+      <FilterBar>
+        <Field label="Search" htmlFor="q">
+          <Input id="q" name="q" defaultValue={params.q} placeholder="Action or target ID" />
+        </Field>
+        <Field label="Action" htmlFor="action">
+          <Select id="action" name="action" defaultValue={params.action ?? ""}>
+            <option value="">All actions</option>
+            {actionOptions.map((action) => (
+              <option key={action} value={action}>
+                {humanizeAction(action)}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Actor" htmlFor="actor">
+          <Select id="actor" name="actor" defaultValue={params.actor ?? ""}>
+            <option value="">All actors</option>
+            <option value={SYSTEM_ACTOR_VALUE}>System</option>
+            {actorOptions.map((actor) => (
+              <option key={actor.id} value={actor.id}>
+                {actor.full_name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="From" htmlFor="from">
+          <Input id="from" name="from" type="date" defaultValue={params.from} />
+        </Field>
+        <Field label="To" htmlFor="to">
+          <Input id="to" name="to" type="date" defaultValue={params.to} />
+        </Field>
+      </FilterBar>
 
       {logItems.length === 0 ? (
         <EmptyState>No audit log entries match these filters.</EmptyState>
@@ -187,12 +174,8 @@ export default async function AuditLogPage({
             return (
               <MobileDataCard key={log.id}>
                 <div className="flex items-start justify-between gap-3">
-                  <Badge tone={actionTone(log.action)} className="capitalize">
-                    {log.action.replace(/_/g, " ")}
-                  </Badge>
-                  <span className="shrink-0 text-xs text-neutral-500">
-                    {new Date(log.created_at).toLocaleString()}
-                  </span>
+                  <Badge tone={actionTone(log.action)}>{humanizeAction(log.action)}</Badge>
+                  <span className="shrink-0 text-xs text-muted">{new Date(log.created_at).toLocaleString()}</span>
                 </div>
                 <dl className="mt-4 grid gap-3">
                   <DataPair label="Actor">{actor?.full_name ?? "System"}</DataPair>
@@ -200,7 +183,7 @@ export default async function AuditLogPage({
                     <TruncatedId value={log.target_id} />
                   </DataPair>
                   <DataPair label="Metadata">
-                    <MetadataList metadata={log.metadata as Record<string, unknown> | null} />
+                    <MetadataDisclosure metadata={log.metadata as Record<string, unknown> | null} />
                   </DataPair>
                 </dl>
               </MobileDataCard>
@@ -212,39 +195,35 @@ export default async function AuditLogPage({
       {logItems.length > 0 ? (
         <Card padding="none" className="hidden overflow-x-auto md:block">
           <table className="w-full text-left text-sm">
-          <thead className="border-b border-neutral-200 bg-neutral-50 text-neutral-600">
-            <tr>
-              <th className="px-4 py-3">Action</th>
-              <th className="px-4 py-3">Actor</th>
-              <th className="px-4 py-3">Target</th>
-              <th className="px-4 py-3">Metadata</th>
-              <th className="px-4 py-3">Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {logItems.map((log) => {
-              const actor = log.profiles as unknown as { full_name: string } | null;
-              return (
-                <tr key={log.id} className="border-b border-neutral-100 align-top last:border-0">
-                  <td className="px-4 py-3">
-                    <Badge tone={actionTone(log.action)} className="capitalize">
-                      {log.action.replace(/_/g, " ")}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3 text-neutral-600">{actor?.full_name ?? "System"}</td>
-                  <td className="px-4 py-3">
-                    <TruncatedId value={log.target_id} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <MetadataList metadata={log.metadata as Record<string, unknown> | null} />
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-neutral-600">
-                    {new Date(log.created_at).toLocaleString()}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
+            <thead className="border-b border-border bg-cream text-muted">
+              <tr>
+                <th className="px-4 py-3">Action</th>
+                <th className="px-4 py-3">Actor</th>
+                <th className="px-4 py-3">Target</th>
+                <th className="px-4 py-3">Metadata</th>
+                <th className="px-4 py-3">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {logItems.map((log) => {
+                const actor = log.profiles as unknown as { full_name: string } | null;
+                return (
+                  <tr key={log.id} className="border-b border-border align-top last:border-0">
+                    <td className="px-4 py-3">
+                      <Badge tone={actionTone(log.action)}>{humanizeAction(log.action)}</Badge>
+                    </td>
+                    <td className="px-4 py-3 text-muted">{actor?.full_name ?? "System"}</td>
+                    <td className="px-4 py-3">
+                      <TruncatedId value={log.target_id} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <MetadataDisclosure metadata={log.metadata as Record<string, unknown> | null} />
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-muted">{new Date(log.created_at).toLocaleString()}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
           </table>
         </Card>
       ) : null}

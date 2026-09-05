@@ -121,3 +121,53 @@ export async function updateCampaign(
   revalidatePath("/dashboard/campaigns");
   redirect("/dashboard/campaigns");
 }
+
+export async function duplicateCampaign(campaignId: string): Promise<{ error?: string }> {
+  await requireStaff();
+  const supabase = await createClient();
+
+  const [{ data: campaign, error: fetchError }, { data: links }] = await Promise.all([
+    supabase.from("burger_campaigns").select("*").eq("id", campaignId).maybeSingle(),
+    supabase.from("campaign_locations").select("location_id").eq("campaign_id", campaignId),
+  ]);
+  if (fetchError) return { error: fetchError.message };
+  if (!campaign) return { error: "Campaign not found." };
+
+  const { id: _id, created_at: _createdAt, updated_at: _updatedAt, ...rest } = campaign;
+  void _id;
+  void _createdAt;
+  void _updatedAt;
+
+  const { data: copy, error: insertError } = await supabase
+    .from("burger_campaigns")
+    .insert({ ...rest, name: `${campaign.name} (copy)`, status: "draft" })
+    .select("id")
+    .single();
+  if (insertError) return { error: insertError.message };
+
+  if (links && links.length > 0) {
+    await supabase
+      .from("campaign_locations")
+      .insert(links.map((link) => ({ campaign_id: copy.id, location_id: link.location_id })));
+  }
+
+  revalidatePath("/dashboard/campaigns");
+  return {};
+}
+
+export async function setCampaignStatus(
+  campaignId: string,
+  status: "active" | "expired" | "draft",
+): Promise<{ error?: string }> {
+  await requireStaff();
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("burger_campaigns")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", campaignId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard/campaigns");
+  revalidatePath("/dashboard");
+  return {};
+}

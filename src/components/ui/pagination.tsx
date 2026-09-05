@@ -30,7 +30,7 @@ export function Pagination({
       >
         Previous
       </Link>
-      <span className="text-sm text-neutral-600">
+      <span className="text-sm text-muted">
         Page {page} of {totalPages}
       </span>
       <Link
